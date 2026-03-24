@@ -1,11 +1,10 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr' // Added CookieOptions
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url)
     const code = searchParams.get('code')
-    // if "next" is in param, use it as the redirect address
     const next = searchParams.get('next') ?? '/'
 
     if (code) {
@@ -18,10 +17,12 @@ export async function GET(request: Request) {
                     get(name: string) {
                         return cookieStore.get(name)?.value
                     },
-                    set(name: string, value: string, options: any) {
+                    // FIXED: Replaced 'any' with CookieOptions
+                    set(name: string, value: string, options: CookieOptions) {
                         cookieStore.set({ name, value, ...options })
                     },
-                    remove(name: string, options: any) {
+                    // FIXED: Replaced 'any' with CookieOptions
+                    remove(name: string, options: CookieOptions) {
                         cookieStore.delete({ name, ...options })
                     },
                 },
@@ -33,6 +34,5 @@ export async function GET(request: Request) {
         }
     }
 
-    // Return the user to an error page with instructions
     return NextResponse.redirect(`${origin}/auth/auth-code-error`)
 }
