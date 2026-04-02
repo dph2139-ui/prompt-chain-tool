@@ -147,7 +147,7 @@ export default async function PromptChainTool() {
                             flavors.map(f => (
                                 <div key={f.id} className="p-6 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex justify-between items-center hover:shadow-xl transition-all group">
                                     <div>
-                                        <h3 className="font-bold text-xl group-hover:text-blue-600 transition-colors">{f.name}</h3>
+                                        <h3 className="font-bold text-xl group-hover:text-blue-600 transition-colors">{f.slug}</h3>
                                         <p className="text-slate-500 line-clamp-1 italic text-sm">{f.description || 'No description'}</p>
                                     </div>
                                     <Link

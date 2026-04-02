@@ -34,7 +34,7 @@ export default async function FlavorStepsPage({ params }: { params: { id: string
                 </Link>
 
                 <header className="mb-10">
-                    <h1 className="text-4xl font-black uppercase tracking-tighter">{flavor.name}</h1>
+                    <h1 className="text-4xl font-black uppercase tracking-tighter">{flavor.slug}</h1>
                     <p className="text-slate-500 mt-2">{flavor.description}</p>
                 </header>
 

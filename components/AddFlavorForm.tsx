@@ -22,7 +22,7 @@ export default function AddFlavorForm({ userId }: { userId: string }) {
         const { error } = await supabase
             .from('humor_flavors')
             .insert({
-                name,
+                slug: name,
                 description,
                 created_by_user_id: userId,
                 modified_by_user_id: userId
