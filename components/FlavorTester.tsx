@@ -31,6 +31,8 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
             })
             const { presignedUrl, cdnUrl } = await res1.json()
 
+            const imageId = cdnUrl.split('/').pop()?.split('.')[0]
+
             // 2. Upload to S3
             await fetch(presignedUrl, { method: "PUT", body: file })
 
@@ -39,21 +41,24 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
             const res3 = await fetch('https://api.almostcrackd.ai/pipeline/generate-captions', {
                 method: 'POST',
                 headers,
-                body: JSON.stringify({ imageUrl: cdnUrl, prompt: steps[0].llm_user_prompt || steps[0].llm_system_prompt })
+                body: JSON.stringify({ imageId, prompt: steps[0].llm_user_prompt || steps[0].llm_system_prompt })
             })
+            if (!res3.ok) throw new Error(await res3.text())
             let currentOutput = await res3.json()
 
             // 4. Run the rest of the steps in order
             for (let i = 1; i < steps.length; i++) {
                 setStatus(`Running Step ${i + 1}...`)
-                const resStep = await fetch('https://api.almostcrackd.ai/pipeline/refine-caption', {
+                const resStep = await fetch('https://api.almostcrackd.ai/pipeline/generate-captions', {
                     method: 'POST',
                     headers,
                     body: JSON.stringify({
+                        imageId,
                         inputContext: currentOutput,
-                        instruction: steps[i].llm_user_prompt || steps[i].llm_system_prompt
+                        prompt: steps[i].llm_user_prompt || steps[i].llm_system_prompt
                     })
                 })
+                if (!resStep.ok) throw new Error(await resStep.text())
                 currentOutput = await resStep.json()
             }
 
