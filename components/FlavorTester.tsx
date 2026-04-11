@@ -30,12 +30,13 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
                 method: 'POST', headers, body: JSON.stringify({ contentType: file.type })
             })
             if (!res1.ok) throw new Error(await res1.text())
-            const res1Data = await res1.json()
-            throw new Error(`DEBUG_DATA: ${JSON.stringify(res1Data)}`)
-            const { presignedUrl, cdnUrl, imageId: responseImageId } = res1Data
+            const { presignedUrl, cdnUrl } = await res1.json()
 
             if (!cdnUrl) throw new Error('Failed to get cdnUrl from generate-presigned-url')
-            const imageId = responseImageId || cdnUrl.split('/').pop()?.split('.')[0]
+            
+            // The imageId is actually the folder name (first UUID in the path), not the file name
+            const urlParts = cdnUrl.split('/')
+            const imageId = urlParts[urlParts.length - 2] // gets the UUID before the filename
 
             // 2. Upload to S3
             const uploadRes = await fetch(presignedUrl, { method: "PUT", body: file })
