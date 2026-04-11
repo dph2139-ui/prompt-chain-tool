@@ -34,13 +34,16 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
 
             if (!cdnUrl) throw new Error('Failed to get cdnUrl from generate-presigned-url')
             
-            // The imageId is actually the folder name (first UUID in the path), not the file name
-            const urlParts = cdnUrl.split('/')
-            const imageId = urlParts[urlParts.length - 2] // gets the UUID before the filename
+            // The imageId is usually the filename without extension
+            const imageId = cdnUrl.split('/').pop()?.split('.')[0]
 
             // 2. Upload to S3
             const uploadRes = await fetch(presignedUrl, { method: "PUT", body: file })
             if (!uploadRes.ok) throw new Error(`S3 upload failed: ${uploadRes.statusText}`)
+
+            // Wait 2.5 seconds to give the backend webhook time to process the new image
+            setStatus('Waiting for image to process...')
+            await new Promise(resolve => setTimeout(resolve, 2500))
 
             // 3. Start the Chain with the first Step (Image -> Text)
             setStatus('Step 1: Analyzing Image...')
