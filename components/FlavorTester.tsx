@@ -29,12 +29,15 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
             const res1 = await fetch('https://api.almostcrackd.ai/pipeline/generate-presigned-url', {
                 method: 'POST', headers, body: JSON.stringify({ contentType: file.type })
             })
+            if (!res1.ok) throw new Error(await res1.text())
             const { presignedUrl, cdnUrl } = await res1.json()
 
+            if (!cdnUrl) throw new Error('Failed to get cdnUrl from generate-presigned-url')
             const imageId = cdnUrl.split('/').pop()?.split('.')[0]
 
             // 2. Upload to S3
-            await fetch(presignedUrl, { method: "PUT", body: file })
+            const uploadRes = await fetch(presignedUrl, { method: "PUT", body: file })
+            if (!uploadRes.ok) throw new Error(`S3 upload failed: ${uploadRes.statusText}`)
 
             // 3. Start the Chain with the first Step (Image -> Text)
             setStatus('Step 1: Analyzing Image...')
@@ -66,7 +69,7 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
             setStatus('Complete!')
         } catch (err) {
             console.error(err)
-            setStatus('Error occurred during test.')
+            setStatus(`Error: ${err instanceof Error ? err.message : String(err)}`)
         } finally {
             setLoading(false)
         }
