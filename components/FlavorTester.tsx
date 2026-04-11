@@ -31,7 +31,7 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
             })
             if (!res1.ok) throw new Error(await res1.text())
             const res1Data = await res1.json()
-            console.log('generate-presigned-url response:', res1Data)
+            throw new Error(`DEBUG_DATA: ${JSON.stringify(res1Data)}`)
             const { presignedUrl, cdnUrl, imageId: responseImageId } = res1Data
 
             if (!cdnUrl) throw new Error('Failed to get cdnUrl from generate-presigned-url')
