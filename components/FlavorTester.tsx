@@ -5,7 +5,7 @@ import { createBrowserClient } from '@supabase/ssr'
 
 export default function FlavorTester({ flavorId, steps }: { flavorId: string, steps: any[] }) {
     const [status, setStatus] = useState('')
-    const [result, setResult] = useState('')
+    const [result, setResult] = useState<any>(null)
     const [loading, setLoading] = useState(false)
 
     const supabase = createBrowserClient(
@@ -80,9 +80,11 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
             {status && <p className="mt-4 font-mono text-sm text-blue-600 animate-pulse">{status}</p>}
 
             {result && (
-                <div className="mt-6 p-4 bg-white dark:bg-slate-800 rounded border border-blue-200">
+                <div className="mt-6 p-4 bg-white dark:bg-slate-800 rounded border border-blue-200 overflow-auto">
                     <p className="text-xs font-bold text-slate-400 uppercase mb-2">Final Output:</p>
-                    <p className="text-lg font-medium">{result}</p>
+                    <pre className="text-sm font-mono whitespace-pre-wrap">
+                        {typeof result === 'string' ? result : JSON.stringify(result, null, 2)}
+                    </pre>
                 </div>
             )}
         </div>
