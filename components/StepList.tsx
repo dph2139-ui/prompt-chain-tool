@@ -12,13 +12,25 @@ export default function StepList({ flavorId, initialSteps, userId }: any) {
 
     const addStep = async () => {
         const { error } = await supabase.from('humor_flavor_steps').insert({
-            flavor_id: flavorId,
-            prompt_text: newPrompt,
-            step_order: steps.length + 1,
+            humor_flavor_id: flavorId,
+            llm_user_prompt: newPrompt,
+            llm_system_prompt: "",
+            order_by: steps.length + 1,
             created_by_user_id: userId,
-            modified_by_user_id: userId
+            modified_by_user_id: userId,
+            llm_input_type_id: 1,
+            llm_output_type_id: 1,
+            llm_model_id: 1,
+            humor_flavor_step_type_id: 1
         })
-        if (!error) { setNewPrompt(''); router.refresh(); window.location.reload(); }
+        if (!error) { 
+            setNewPrompt(''); 
+            router.refresh(); 
+            window.location.reload(); 
+        } else {
+            console.error(error);
+            alert("Error adding step: " + error.message);
+        }
     }
 
     const deleteStep = async (id: string) => {
@@ -31,12 +43,12 @@ export default function StepList({ flavorId, initialSteps, userId }: any) {
         const targetIndex = direction === 'up' ? index - 1 : index + 1
         if (targetIndex < 0 || targetIndex >= steps.length) return
 
-        // Swap step_order values
+        // Swap order_by values
         const currentStep = newSteps[index]
         const targetStep = newSteps[targetIndex]
 
-        await supabase.from('humor_flavor_steps').update({ step_order: targetStep.step_order }).eq('id', currentStep.id)
-        await supabase.from('humor_flavor_steps').update({ step_order: currentStep.step_order }).eq('id', targetStep.id)
+        await supabase.from('humor_flavor_steps').update({ order_by: targetStep.order_by }).eq('id', currentStep.id)
+        await supabase.from('humor_flavor_steps').update({ order_by: currentStep.order_by }).eq('id', targetStep.id)
 
         window.location.reload()
     }
@@ -47,8 +59,8 @@ export default function StepList({ flavorId, initialSteps, userId }: any) {
                 {steps.map((step: any, index: number) => (
                     <div key={step.id} className="p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <span className="font-black text-blue-600">#{step.step_order}</span>
-                            <p className="font-medium">{step.prompt_text}</p>
+                            <span className="font-black text-blue-600">#{step.order_by}</span>
+                            <p className="font-medium">{step.llm_user_prompt || step.llm_system_prompt}</p>
                         </div>
                         <div className="flex gap-2">
                             <button onClick={() => moveStep(index, 'up')} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded">⬆️</button>

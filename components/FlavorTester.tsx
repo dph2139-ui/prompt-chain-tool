@@ -39,7 +39,7 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
             const res3 = await fetch('https://api.almostcrackd.ai/pipeline/generate-captions', {
                 method: 'POST',
                 headers,
-                body: JSON.stringify({ imageUrl: cdnUrl, prompt: steps[0].prompt_text })
+                body: JSON.stringify({ imageUrl: cdnUrl, prompt: steps[0].llm_user_prompt || steps[0].llm_system_prompt })
             })
             let currentOutput = await res3.json()
 
@@ -51,7 +51,7 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
                     headers,
                     body: JSON.stringify({
                         inputContext: currentOutput,
-                        instruction: steps[i].prompt_text
+                        instruction: steps[i].llm_user_prompt || steps[i].llm_system_prompt
                     })
                 })
                 currentOutput = await resStep.json()

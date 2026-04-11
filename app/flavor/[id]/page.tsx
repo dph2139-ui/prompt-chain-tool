@@ -20,8 +20,8 @@ export default async function FlavorStepsPage({ params }: { params: { id: string
     const { data: steps } = await supabase
         .from('humor_flavor_steps')
         .select('*')
-        .eq('flavor_id', id)
-        .order('step_order', { ascending: true })
+        .eq('humor_flavor_id', id)
+        .order('order_by', { ascending: true })
 
     const { data: { user } } = await supabase.auth.getUser()
 
