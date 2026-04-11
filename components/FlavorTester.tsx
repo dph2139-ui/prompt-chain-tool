@@ -34,19 +34,41 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
 
             if (!cdnUrl) throw new Error('Failed to get cdnUrl from generate-presigned-url')
 
+            const imageId = cdnUrl.split('/').pop()?.split('.')[0]
+
             // 2. Upload to S3
             const uploadRes = await fetch(presignedUrl, { method: "PUT", body: file })
             if (!uploadRes.ok) throw new Error(`S3 upload failed: ${uploadRes.statusText}`)
 
             // 3. Start the Chain with the first Step (Image -> Text)
             setStatus('Step 1: Analyzing Image...')
-            const res3 = await fetch('https://api.almostcrackd.ai/pipeline/generate-captions', {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({ imageUrl: cdnUrl, prompt: steps[0].llm_user_prompt || steps[0].llm_system_prompt })
-            })
-            if (!res3.ok) throw new Error(await res3.text())
-            let currentOutput = await res3.json()
+            
+            let res3;
+            let retries = 10;
+            let currentOutput;
+
+            while (retries > 0) {
+                res3 = await fetch('https://api.almostcrackd.ai/pipeline/generate-captions', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ imageId, prompt: steps[0].llm_user_prompt || steps[0].llm_system_prompt })
+                });
+
+                if (res3.ok) {
+                    currentOutput = await res3.json();
+                    break;
+                }
+
+                const errorText = await res3.text();
+                if (errorText.includes("Image not found")) {
+                    retries--;
+                    if (retries === 0) throw new Error(errorText);
+                    setStatus(`Step 1: Waiting for image to be processed by backend... (${retries} attempts left)`);
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                } else {
+                    throw new Error(errorText);
+                }
+            }
 
             // 4. Run the rest of the steps in order
             for (let i = 1; i < steps.length; i++) {
@@ -55,7 +77,7 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
                     method: 'POST',
                     headers,
                     body: JSON.stringify({
-                        imageUrl: cdnUrl,
+                        imageId,
                         inputContext: currentOutput,
                         prompt: steps[i].llm_user_prompt || steps[i].llm_system_prompt
                     })
