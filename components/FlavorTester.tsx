@@ -72,8 +72,8 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
 
             // 4. Run the rest of the steps in order
             for (let i = 1; i < steps.length; i++) {
-                setStatus(`Running Step ${i + 1}...`)
-                const resStep = await fetch('https://api.almostcrackd.ai/pipeline/generate-captions', {
+                setStatus(`Running Step ${i + 1}...`);
+                const resStep: Response = await fetch('https://api.almostcrackd.ai/pipeline/generate-captions', {
                     method: 'POST',
                     headers,
                     body: JSON.stringify({
@@ -81,9 +81,9 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
                         inputContext: currentOutput,
                         prompt: steps[i].llm_user_prompt || steps[i].llm_system_prompt
                     })
-                })
-                if (!resStep.ok) throw new Error(await resStep.text())
-                currentOutput = await resStep.json()
+                });
+                if (!resStep.ok) throw new Error(await resStep.text());
+                currentOutput = await resStep.json();
             }
 
             setResult(currentOutput)
