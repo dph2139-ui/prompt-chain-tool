@@ -37,13 +37,15 @@ export default function FlavorTester({ steps }: { flavorId?: string, steps: Step
                 method: 'POST', headers, body: JSON.stringify({ contentType: file.type })
             })
             if (!res1.ok) throw new Error(await res1.text())
-            const { presignedUrl, cdnUrl } = await res1.json()
+            const presignedResponse = await res1.json()
+            const { presignedUrl, cdnUrl } = presignedResponse
+            console.log("Presigned URL response:", presignedResponse);
 
             if (!cdnUrl) throw new Error('Failed to get cdnUrl from generate-presigned-url')
 
             const url = new URL(cdnUrl);
-            // The backend requires a pure UUID for imageId, so we extract only the UUID portion
-            const imageId = url.pathname.split('/').pop()?.split('.')[0];
+            // First check if the backend returned the database ID directly, otherwise fallback to parsing the URL
+            const imageId = presignedResponse.imageId || presignedResponse.id || url.pathname.split('/').pop()?.split('.')[0];
 
             if (!imageId) throw new Error('Could not parse imageId from CDN URL');
 
