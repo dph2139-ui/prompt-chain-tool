@@ -42,13 +42,17 @@ export default function FlavorTester({ steps }: { flavorId?: string, steps: Step
             if (!cdnUrl) throw new Error('Failed to get cdnUrl from generate-presigned-url')
 
             const url = new URL(cdnUrl);
-            // Extract the full filename (including extension) as expected by the backend
-            const imageId = url.pathname.substring(1);
+            // The backend requires a pure UUID for imageId, so we extract only the UUID portion
+            const imageId = url.pathname.split('/').pop()?.split('.')[0];
 
             if (!imageId) throw new Error('Could not parse imageId from CDN URL');
 
-            // 2. Upload to S3
-            const uploadRes = await fetch(presignedUrl, { method: "PUT", body: file })
+            // 2. Upload to S3 (Crucial: Content-Type must be explicitly set to match presigned URL)
+            const uploadRes = await fetch(presignedUrl, { 
+                method: "PUT", 
+                body: file,
+                headers: { 'Content-Type': file.type } 
+            })
             if (!uploadRes.ok) throw new Error(`S3 upload failed: ${uploadRes.statusText}`)
 
             // 3. Start the Chain with the first Step (Image -> Text)
@@ -62,7 +66,7 @@ export default function FlavorTester({ steps }: { flavorId?: string, steps: Step
                 res3 = await fetch('https://api.almostcrackd.ai/pipeline/generate-captions', {
                     method: 'POST',
                     headers,
-                    body: JSON.stringify({ imageId, prompt: steps[0].llm_user_prompt || steps[0].llm_system_prompt })
+                    body: JSON.stringify({ imageId, imageUrl: cdnUrl, prompt: steps[0].llm_user_prompt || steps[0].llm_system_prompt })
                 });
 
                 if (res3.ok) {
