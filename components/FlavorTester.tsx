@@ -42,8 +42,8 @@ export default function FlavorTester({ steps }: { flavorId?: string, steps: Step
             if (!cdnUrl) throw new Error('Failed to get cdnUrl from generate-presigned-url')
 
             const url = new URL(cdnUrl);
-            // Extracts UUID and strips file extension for the database
-            const imageId = url.pathname.split('/').pop()?.split('.')[0];
+            // Extract the full filename (including extension) as expected by the backend
+            const imageId = url.pathname.substring(1);
 
             if (!imageId) throw new Error('Could not parse imageId from CDN URL');
 
