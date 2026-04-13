@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
 
+
 export default function AddFlavorForm({ userId }: { userId: string }) {
     const [name, setName] = useState('')
     const [description, setDescription] = useState('')

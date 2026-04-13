@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
 
-export default function StepList({ flavorId, initialSteps, userId }: any) {
-    const [steps, setSteps] = useState(initialSteps)
+export default function StepList({ flavorId, initialSteps, userId }: { flavorId: string, initialSteps: { id: string, order_by: number, llm_user_prompt?: string, llm_system_prompt?: string, [key: string]: unknown }[], userId: string }) {
+    const [steps] = useState(initialSteps)
     const [newPrompt, setNewPrompt] = useState('')
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     const router = useRouter()
@@ -56,7 +56,7 @@ export default function StepList({ flavorId, initialSteps, userId }: any) {
     return (
         <div className="space-y-6">
             <div className="space-y-4">
-                {steps.map((step: any, index: number) => (
+                {steps.map((step: { id: string, order_by: number, llm_user_prompt?: string, llm_system_prompt?: string, [key: string]: unknown }, index: number) => (
                     <div key={step.id} className="p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <span className="font-black text-blue-600">#{step.order_by}</span>

@@ -3,9 +3,15 @@
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 
-export default function FlavorTester({ flavorId, steps }: { flavorId: string, steps: any[] }) {
+interface Step {
+    llm_user_prompt?: string;
+    llm_system_prompt?: string;
+    [key: string]: unknown;
+}
+
+export default function FlavorTester({ steps }: { flavorId?: string, steps: Step[] }) {
     const [status, setStatus] = useState('')
-    const [result, setResult] = useState<any>(null)
+    const [result, setResult] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
 
     const supabase = createBrowserClient(
@@ -19,6 +25,7 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
 
         setLoading(true)
         setStatus('Uploading image...')
+        setResult(null)
 
         try {
             const { data: { session } } = await supabase.auth.getSession()
@@ -34,7 +41,11 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
 
             if (!cdnUrl) throw new Error('Failed to get cdnUrl from generate-presigned-url')
 
-            const imageId = cdnUrl.split('/').pop()?.split('.')[0]
+            const url = new URL(cdnUrl);
+            // Extracts UUID and strips file extension for the database
+            const imageId = url.pathname.split('/').pop()?.split('.')[0];
+
+            if (!imageId) throw new Error('Could not parse imageId from CDN URL');
 
             // 2. Upload to S3
             const uploadRes = await fetch(presignedUrl, { method: "PUT", body: file })
@@ -42,7 +53,7 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
 
             // 3. Start the Chain with the first Step (Image -> Text)
             setStatus('Step 1: Analyzing Image...')
-            
+
             let res3;
             let retries = 10;
             let currentOutput;
@@ -86,7 +97,12 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
                 currentOutput = await resStep.json();
             }
 
-            setResult(currentOutput)
+            // Ensure the result is a string before setting state
+            const finalResult = typeof currentOutput === 'string'
+                ? currentOutput
+                : JSON.stringify(currentOutput, null, 2);
+
+            setResult(finalResult)
             setStatus('Complete!')
         } catch (err) {
             console.error(err)
@@ -97,7 +113,7 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
     }
 
     return (
-        <div className="mt-10 p-6 bg-blue-50 dark:bg-slate-900 rounded-xl border-2 border-blue-200 dark:border-blue-900">
+        <div className="mt-10 p-6 bg-blue-50 dark:bg-slate-900 rounded-xl border-2 border-blue-200 dark:border-blue-900 text-slate-900 dark:text-slate-100">
             <h3 className="text-xl font-black mb-4 uppercase tracking-tight">Test this Flavor</h3>
             <input
                 type="file"
@@ -112,7 +128,7 @@ export default function FlavorTester({ flavorId, steps }: { flavorId: string, st
                 <div className="mt-6 p-4 bg-white dark:bg-slate-800 rounded border border-blue-200 overflow-auto">
                     <p className="text-xs font-bold text-slate-400 uppercase mb-2">Final Output:</p>
                     <pre className="text-sm font-mono whitespace-pre-wrap">
-                        {typeof result === 'string' ? result : JSON.stringify(result, null, 2)}
+                        {result}
                     </pre>
                 </div>
             )}
