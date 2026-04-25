@@ -13,7 +13,6 @@ export default function FlavorTester({ steps }: { flavorId?: string, steps: Step
     const [status, setStatus] = useState('')
     const [result, setResult] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
-    const [debug, setDebug] = useState<string | null>(null)
 
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -40,62 +39,47 @@ export default function FlavorTester({ steps }: { flavorId?: string, steps: Step
             if (!res1.ok) throw new Error(await res1.text())
             const presignedResponse = await res1.json()
             const { presignedUrl, cdnUrl } = presignedResponse
-            setDebug(`generate-presigned-url response keys: ${JSON.stringify(Object.keys(presignedResponse))}\nFull response: ${JSON.stringify(presignedResponse, null, 2)}`);
 
             if (!cdnUrl) throw new Error('Failed to get cdnUrl from generate-presigned-url')
 
-            const url = new URL(cdnUrl);
-            // First check if the backend returned the database ID directly, otherwise fallback to parsing the URL
-            const imageId = presignedResponse.imageId || presignedResponse.id || url.pathname.split('/').pop()?.split('.')[0];
-
-            if (!imageId) throw new Error('Could not parse imageId from CDN URL');
 
             // 2. Upload to S3 (Crucial: Content-Type must be explicitly set to match presigned URL)
-            const uploadRes = await fetch(presignedUrl, { 
-                method: "PUT", 
+            const uploadRes = await fetch(presignedUrl, {
+                method: "PUT",
                 body: file,
-                headers: { 'Content-Type': file.type } 
+                headers: { 'Content-Type': file.type }
             })
             if (!uploadRes.ok) throw new Error(`S3 upload failed: ${uploadRes.statusText}`)
 
-            // 3. Start the Chain with the first Step (Image -> Text)
+            // 3. Register image in backend database to get the real imageId
+            setStatus('Registering image...')
+            const registerRes = await fetch('https://api.almostcrackd.ai/pipeline/upload-image-from-url', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ imageUrl: cdnUrl, isCommonUse: false })
+            })
+            if (!registerRes.ok) throw new Error(`Image registration failed: ${await registerRes.text()}`)
+            const { imageId: registeredImageId } = await registerRes.json()
+            if (!registeredImageId) throw new Error('Image registration did not return an imageId')
+
+            // 4. Start the Chain with the first Step (Image -> Text)
             setStatus('Step 1: Analyzing Image...')
+            const res3 = await fetch('https://api.almostcrackd.ai/pipeline/generate-captions', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ imageId: registeredImageId, prompt: steps[0].llm_user_prompt || steps[0].llm_system_prompt })
+            })
+            if (!res3.ok) throw new Error(await res3.text())
+            let currentOutput = await res3.json()
 
-            let res3;
-            let retries = 10;
-            let currentOutput;
-
-            while (retries > 0) {
-                res3 = await fetch('https://api.almostcrackd.ai/pipeline/generate-captions', {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ imageId, imageUrl: cdnUrl, prompt: steps[0].llm_user_prompt || steps[0].llm_system_prompt })
-                });
-
-                if (res3.ok) {
-                    currentOutput = await res3.json();
-                    break;
-                }
-
-                const errorText = await res3.text();
-                if (errorText.includes("Image not found")) {
-                    retries--;
-                    if (retries === 0) throw new Error(errorText);
-                    setStatus(`Step 1: Waiting for image to be processed by backend... (${retries} attempts left)`);
-                    await new Promise(resolve => setTimeout(resolve, 3000));
-                } else {
-                    throw new Error(errorText);
-                }
-            }
-
-            // 4. Run the rest of the steps in order
+            // 5. Run the rest of the steps in order
             for (let i = 1; i < steps.length; i++) {
                 setStatus(`Running Step ${i + 1}...`);
                 const resStep: Response = await fetch('https://api.almostcrackd.ai/pipeline/generate-captions', {
                     method: 'POST',
                     headers,
                     body: JSON.stringify({
-                        imageId,
+                        imageId: registeredImageId,
                         inputContext: currentOutput,
                         prompt: steps[i].llm_user_prompt || steps[i].llm_system_prompt
                     })
@@ -131,12 +115,6 @@ export default function FlavorTester({ steps }: { flavorId?: string, steps: Step
 
             {status && <p className="mt-4 font-mono text-sm text-blue-600 animate-pulse">{status}</p>}
 
-            {debug && (
-                <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-300 dark:border-yellow-700">
-                    <p className="text-xs font-bold text-yellow-700 dark:text-yellow-400 uppercase mb-1">Debug — Presigned URL Response:</p>
-                    <pre className="text-xs font-mono whitespace-pre-wrap text-yellow-800 dark:text-yellow-300">{debug}</pre>
-                </div>
-            )}
 
             {result && (
                 <div className="mt-6 p-4 bg-white dark:bg-slate-800 rounded border border-blue-200 overflow-auto">
