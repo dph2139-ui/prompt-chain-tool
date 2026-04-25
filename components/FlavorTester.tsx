@@ -88,10 +88,11 @@ export default function FlavorTester({ steps }: { flavorId?: string, steps: Step
                 currentOutput = await resStep.json();
             }
 
-            // Ensure the result is a string before setting state
-            const finalResult = typeof currentOutput === 'string'
-                ? currentOutput
-                : JSON.stringify(currentOutput, null, 2);
+            const finalResult = Array.isArray(currentOutput)
+                ? currentOutput.map((item: any) => (typeof item === 'string' ? item : item?.content ?? JSON.stringify(item))).join('\n\n')
+                : typeof currentOutput === 'string'
+                    ? currentOutput
+                    : (currentOutput as any)?.content ?? JSON.stringify(currentOutput, null, 2);
 
             setResult(finalResult)
             setStatus('Complete!')
