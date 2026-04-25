@@ -13,6 +13,7 @@ export default function FlavorTester({ steps }: { flavorId?: string, steps: Step
     const [status, setStatus] = useState('')
     const [result, setResult] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
+    const [debug, setDebug] = useState<string | null>(null)
 
     const supabase = createBrowserClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,7 +40,7 @@ export default function FlavorTester({ steps }: { flavorId?: string, steps: Step
             if (!res1.ok) throw new Error(await res1.text())
             const presignedResponse = await res1.json()
             const { presignedUrl, cdnUrl } = presignedResponse
-            console.log("Presigned URL response:", presignedResponse);
+            setDebug(`generate-presigned-url response keys: ${JSON.stringify(Object.keys(presignedResponse))}\nFull response: ${JSON.stringify(presignedResponse, null, 2)}`);
 
             if (!cdnUrl) throw new Error('Failed to get cdnUrl from generate-presigned-url')
 
@@ -129,6 +130,13 @@ export default function FlavorTester({ steps }: { flavorId?: string, steps: Step
             />
 
             {status && <p className="mt-4 font-mono text-sm text-blue-600 animate-pulse">{status}</p>}
+
+            {debug && (
+                <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-300 dark:border-yellow-700">
+                    <p className="text-xs font-bold text-yellow-700 dark:text-yellow-400 uppercase mb-1">Debug — Presigned URL Response:</p>
+                    <pre className="text-xs font-mono whitespace-pre-wrap text-yellow-800 dark:text-yellow-300">{debug}</pre>
+                </div>
+            )}
 
             {result && (
                 <div className="mt-6 p-4 bg-white dark:bg-slate-800 rounded border border-blue-200 overflow-auto">
