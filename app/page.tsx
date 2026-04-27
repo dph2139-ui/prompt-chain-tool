@@ -125,9 +125,6 @@ export default async function PromptChainTool() {
                     </h1>
                     <p className="text-slate-500 font-medium text-sm">ADMIN: {user.email}</p>
                 </div>
-                <div className="text-xs font-bold bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-4 py-2 rounded-full uppercase tracking-widest">
-                    Assignment #8
-                </div>
             </header>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
