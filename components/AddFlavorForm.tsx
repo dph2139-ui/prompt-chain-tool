@@ -3,12 +3,13 @@
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
-
+import Toast from '@/components/Toast'
 
 export default function AddFlavorForm({ userId }: { userId: string }) {
     const [name, setName] = useState('')
     const [description, setDescription] = useState('')
     const [loading, setLoading] = useState(false)
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
     const router = useRouter()
 
     const supabase = createBrowserClient(
@@ -31,44 +32,47 @@ export default function AddFlavorForm({ userId }: { userId: string }) {
 
         setLoading(false)
         if (error) {
-            alert("Error: " + error.message)
+            setToast({ message: 'Error: ' + error.message, type: 'error' })
         } else {
             setName('')
             setDescription('')
             router.refresh()
-            alert("Humor Flavor successfully created!")
+            setToast({ message: 'Humor flavor saved successfully!', type: 'success' })
         }
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-                <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Flavor Name</label>
-                <input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full p-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    placeholder="e.g. Grumpy Cat Vibes"
-                    required
-                />
-            </div>
-            <div>
-                <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Short Description</label>
-                <textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full p-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    placeholder="How should the AI behave?"
-                    rows={3}
-                />
-            </div>
-            <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-lg shadow-lg shadow-blue-500/20 disabled:opacity-50 transition-all"
-            >
-                {loading ? 'Processing...' : '💾 Save Flavor'}
-            </button>
-        </form>
+        <>
+            {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
+            <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                    <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Flavor Name</label>
+                    <input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full p-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        placeholder="e.g. Grumpy Cat Vibes"
+                        required
+                    />
+                </div>
+                <div>
+                    <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-2">Short Description</label>
+                    <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="w-full p-3 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        placeholder="Describe the humor style — e.g. dry wit, self-deprecating, absurdist one-liners"
+                        rows={3}
+                    />
+                </div>
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-3 rounded-lg shadow-lg shadow-blue-500/20 disabled:opacity-50 transition-all"
+                >
+                    {loading ? 'Saving...' : '💾 Save Flavor'}
+                </button>
+            </form>
+        </>
     )
 }

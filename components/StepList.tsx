@@ -3,10 +3,12 @@
 import { useState } from 'react'
 import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
+import Toast from '@/components/Toast'
 
 export default function StepList({ flavorId, initialSteps, userId }: { flavorId: string, initialSteps: { id: string, order_by: number, llm_user_prompt?: string, llm_system_prompt?: string, [key: string]: unknown }[], userId: string }) {
     const [steps] = useState(initialSteps)
     const [newPrompt, setNewPrompt] = useState('')
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
     const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
     const router = useRouter()
 
@@ -23,13 +25,14 @@ export default function StepList({ flavorId, initialSteps, userId }: { flavorId:
             llm_model_id: 1,
             humor_flavor_step_type_id: 1
         })
-        if (!error) { 
-            setNewPrompt(''); 
-            router.refresh(); 
-            window.location.reload(); 
+        if (!error) {
+            setNewPrompt('')
+            setToast({ message: 'Step added successfully!', type: 'success' })
+            router.refresh()
+            window.location.reload()
         } else {
-            console.error(error);
-            alert("Error adding step: " + error.message);
+            console.error(error)
+            setToast({ message: 'Error adding step: ' + error.message, type: 'error' })
         }
     }
 
@@ -54,6 +57,8 @@ export default function StepList({ flavorId, initialSteps, userId }: { flavorId:
     }
 
     return (
+        <>
+        {toast && <Toast message={toast.message} type={toast.type} onDismiss={() => setToast(null)} />}
         <div className="space-y-6">
             <div className="space-y-4">
                 {steps.map((step: { id: string, order_by: number, llm_user_prompt?: string, llm_system_prompt?: string, [key: string]: unknown }, index: number) => (
@@ -84,5 +89,6 @@ export default function StepList({ flavorId, initialSteps, userId }: { flavorId:
                 </div>
             </div>
         </div>
+        </>
     )
 }
