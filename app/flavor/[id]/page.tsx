@@ -28,9 +28,11 @@ export default async function FlavorStepsPage({ params }: { params: { id: string
     return (
         <main className="p-8 md:p-16 min-h-screen bg-slate-50 dark:bg-slate-900 dark:text-white">
             <div className="max-w-4xl mx-auto">
-                {/* FIX 1: Changed <a> to <Link> */}
-                <Link href="/" className="text-blue-600 hover:underline mb-8 inline-block">
-                    ← Back to Flavors
+                <Link
+                    href="/"
+                    className="inline-flex items-center gap-2 mb-8 px-5 py-2.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-sm shadow-sm hover:shadow-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                >
+                    ← Back to Dashboard
                 </Link>
 
                 <header className="mb-10">

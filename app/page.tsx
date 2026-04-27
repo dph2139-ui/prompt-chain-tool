@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import AddFlavorForm from '@/components/AddFlavorForm'
+import DuplicateFlavorButton from '@/components/DuplicateFlavorButton'
 
 export default async function PromptChainTool() {
     const cookieStore = await cookies()
@@ -26,9 +27,15 @@ export default async function PromptChainTool() {
     if (!user) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-900 p-6 text-center">
-                <h1 className="text-4xl font-black mb-4 dark:text-white uppercase tracking-tighter italic">Prompt Chain Tool</h1>
-                <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-sm">
-                    You must be signed in with an authorized admin account to manage humor flavors.
+                <div className="mb-8">
+                    <span className="text-5xl">🧪</span>
+                </div>
+                <h1 className="text-4xl font-black mb-3 dark:text-white uppercase tracking-tighter italic">Prompt Chain Tool</h1>
+                <p className="text-slate-500 dark:text-slate-400 mb-2 max-w-sm text-sm">
+                    Admin tool for managing humor flavors and prompt chains.
+                </p>
+                <p className="text-slate-400 dark:text-slate-500 mb-10 max-w-sm text-xs">
+                    Sign in with your authorized Google admin account to continue.
                 </p>
 
                 <form action={async () => {
@@ -46,21 +53,18 @@ export default async function PromptChainTool() {
                         }
                     )
 
-                    // We use the VERCEL_URL env var if it exists, otherwise localhost
                     const baseUrl = process.env.VERCEL_URL
                         ? `https://${process.env.VERCEL_URL}`
                         : 'http://localhost:3000'
 
                     const { data } = await supabase.auth.signInWithOAuth({
                         provider: 'google',
-                        options: {
-                            redirectTo: `${baseUrl}/auth/callback`
-                        }
+                        options: { redirectTo: `${baseUrl}/auth/callback` }
                     })
                     if (data.url) redirect(data.url)
                 }}>
-                    <button type="submit" className="bg-blue-600 text-white px-10 py-4 rounded-full font-black shadow-xl hover:bg-blue-700 hover:scale-105 transition-all">
-                        Log In with Google
+                    <button type="submit" className="bg-blue-600 text-white px-10 py-4 rounded-full font-black shadow-xl hover:bg-blue-700 hover:scale-105 transition-all text-lg">
+                        Sign In with Google →
                     </button>
                 </form>
             </div>
@@ -76,12 +80,15 @@ export default async function PromptChainTool() {
 
     if (!profile?.is_superadmin && !profile?.is_matrix_admin) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-red-50 dark:bg-slate-950 p-10">
-                <div className="bg-white dark:bg-slate-900 p-10 rounded-3xl shadow-2xl border border-red-200 dark:border-red-900 text-center max-w-lg">
-                    <span className="text-6xl mb-6 block">🚫</span>
-                    <h1 className="text-2xl font-black text-red-700 dark:text-red-500 mb-3 uppercase italic">Access Denied</h1>
-                    <p className="text-slate-600 dark:text-slate-400 mb-6">
-                        The account <strong>{user.email}</strong> does not have admin privileges.
+            <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-950 p-10">
+                <div className="bg-white dark:bg-slate-900 p-10 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 text-center max-w-lg">
+                    <span className="text-5xl mb-6 block">🔒</span>
+                    <h1 className="text-2xl font-black text-slate-800 dark:text-slate-100 mb-3 uppercase italic">Admin Access Required</h1>
+                    <p className="text-slate-500 dark:text-slate-400 mb-2 text-sm">
+                        <strong className="text-slate-700 dark:text-slate-300">{user.email}</strong> is not authorized for this tool.
+                    </p>
+                    <p className="text-slate-400 dark:text-slate-500 mb-8 text-xs">
+                        Please sign in with your admin Google account to continue.
                     </p>
                     <form action={async () => {
                         'use server'
@@ -94,7 +101,9 @@ export default async function PromptChainTool() {
                         await supabase.auth.signOut()
                         redirect('/')
                     }}>
-                        <button className="text-blue-600 font-bold underline hover:text-blue-800">Sign Out & Try Another Account</button>
+                        <button className="bg-blue-600 text-white px-8 py-3 rounded-full font-black hover:bg-blue-700 transition-all shadow-lg">
+                            Sign Out & Use Another Account
+                        </button>
                     </form>
                 </div>
             </div>
@@ -115,9 +124,6 @@ export default async function PromptChainTool() {
                         Prompt Chain <span className="text-blue-600">Tool</span>
                     </h1>
                     <p className="text-slate-500 font-medium text-sm">ADMIN: {user.email}</p>
-                </div>
-                <div className="text-xs font-bold bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-4 py-2 rounded-full uppercase tracking-widest">
-                    Assignment #8
                 </div>
             </header>
 
@@ -150,12 +156,15 @@ export default async function PromptChainTool() {
                                         <h3 className="font-bold text-xl group-hover:text-blue-600 transition-colors">{f.slug}</h3>
                                         <p className="text-slate-500 line-clamp-1 italic text-sm">{f.description || 'No description'}</p>
                                     </div>
-                                    <Link
-                                        href={`/flavor/${f.id}`}
-                                        className="bg-slate-900 dark:bg-white dark:text-slate-900 text-white px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg"
-                                    >
-                                        Edit Steps →
-                                    </Link>
+                                    <div className="flex items-center gap-3">
+                                        <DuplicateFlavorButton flavorId={f.id} flavorSlug={f.slug} userId={user.id} />
+                                        <Link
+                                            href={`/flavor/${f.id}`}
+                                            className="bg-slate-900 dark:bg-white dark:text-slate-900 text-white px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg"
+                                        >
+                                            Edit Steps →
+                                        </Link>
+                                    </div>
                                 </div>
                             ))
                         )}
