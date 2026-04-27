@@ -29,7 +29,6 @@ export default function StepList({ flavorId, initialSteps, userId }: { flavorId:
             setNewPrompt('')
             setToast({ message: 'Step added successfully!', type: 'success' })
             router.refresh()
-            window.location.reload()
         } else {
             console.error(error)
             setToast({ message: 'Error adding step: ' + error.message, type: 'error' })
@@ -37,8 +36,12 @@ export default function StepList({ flavorId, initialSteps, userId }: { flavorId:
     }
 
     const deleteStep = async (id: string) => {
-        await supabase.from('humor_flavor_steps').delete().eq('id', id)
-        window.location.reload()
+        const { error } = await supabase.from('humor_flavor_steps').delete().eq('id', id)
+        if (error) {
+            setToast({ message: 'Error deleting step: ' + error.message, type: 'error' })
+        } else {
+            router.refresh()
+        }
     }
 
     const moveStep = async (index: number, direction: 'up' | 'down') => {
@@ -46,14 +49,13 @@ export default function StepList({ flavorId, initialSteps, userId }: { flavorId:
         const targetIndex = direction === 'up' ? index - 1 : index + 1
         if (targetIndex < 0 || targetIndex >= steps.length) return
 
-        // Swap order_by values
         const currentStep = newSteps[index]
         const targetStep = newSteps[targetIndex]
 
         await supabase.from('humor_flavor_steps').update({ order_by: targetStep.order_by }).eq('id', currentStep.id)
         await supabase.from('humor_flavor_steps').update({ order_by: currentStep.order_by }).eq('id', targetStep.id)
 
-        window.location.reload()
+        router.refresh()
     }
 
     return (
