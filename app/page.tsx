@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import AddFlavorForm from '@/components/AddFlavorForm'
+import DuplicateFlavorButton from '@/components/DuplicateFlavorButton'
 
 export default async function PromptChainTool() {
     const cookieStore = await cookies()
@@ -158,12 +159,15 @@ export default async function PromptChainTool() {
                                         <h3 className="font-bold text-xl group-hover:text-blue-600 transition-colors">{f.slug}</h3>
                                         <p className="text-slate-500 line-clamp-1 italic text-sm">{f.description || 'No description'}</p>
                                     </div>
-                                    <Link
-                                        href={`/flavor/${f.id}`}
-                                        className="bg-slate-900 dark:bg-white dark:text-slate-900 text-white px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg"
-                                    >
-                                        Edit Steps →
-                                    </Link>
+                                    <div className="flex items-center gap-3">
+                                        <DuplicateFlavorButton flavorId={f.id} flavorSlug={f.slug} userId={user.id} />
+                                        <Link
+                                            href={`/flavor/${f.id}`}
+                                            className="bg-slate-900 dark:bg-white dark:text-slate-900 text-white px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg"
+                                        >
+                                            Edit Steps →
+                                        </Link>
+                                    </div>
                                 </div>
                             ))
                         )}
